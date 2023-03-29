@@ -1,0 +1,33 @@
+# Compiled binary files
+*.exe
+*.out
+
+# Log files
+*.log
+
+# Dependency directories
+vendor/
+*/vendor/
+
+# Build directories
+bin/
+*/bin/
+
+# Go package files
+*.a
+*.o
+
+# Output files
+*.prof
+
+# Text editor backup files
+*~
+*.swp
+*.swo
+*.swn
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+Icon?
+._*
