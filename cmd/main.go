@@ -10,7 +10,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"log"
+	accHandler "mini-e-wallet/handler"
+	"mini-e-wallet/repository"
+	"mini-e-wallet/service"
 	"net/http"
+	"time"
 )
 
 //go:embed migrations
@@ -63,8 +67,16 @@ func main() {
 		panic(err)
 	}
 
+	timeoutCtx := viper.GetInt(`context.timeout`)
+	accountRepo := repository.NewAccountRepository(db)
+	tokenRepo := repository.NewTokenRepository(db)
+	accountService := service.NewAccountService(accountRepo, tokenRepo)
+	accountHandler := accHandler.NewAccountHandler(accountService, time.Duration(timeoutCtx)*time.Second)
+
 	serverPort := viper.GetString(`server.address`)
 	handler := httprouter.New()
+	handler.POST("/api/v1/init", accountHandler.RegistUser)
+
 	logrus.Infof("Server run on localhost%v", serverPort)
 	log.Fatal(http.ListenAndServe(serverPort, handler))
 }
