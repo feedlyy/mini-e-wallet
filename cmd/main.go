@@ -1,15 +1,20 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"log"
 	"net/http"
 )
+
+//go:embed migrations/*.sql
+var migrations embed.FS
 
 func init() {
 	viper.SetConfigFile(`../config/config.json`)
@@ -47,6 +52,16 @@ func main() {
 		panic(err)
 	}
 	logrus.Info("Pong from db")
+
+	goose.SetBaseFS(migrations)
+
+	if err = goose.SetDialect("postgres"); err != nil {
+		panic(err)
+	}
+
+	if err = goose.Up(db.DB, "migrations"); err != nil {
+		panic(err)
+	}
 
 	serverPort := viper.GetString(`server.address`)
 	handler := httprouter.New()
