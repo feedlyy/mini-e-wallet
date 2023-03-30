@@ -1,15 +1,15 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE transactions (
-    id string NOT NULL,
-    status string,
-    type string,
+    id text NOT NULL,
+    status text,
+    type text,
     amount int,
-    reference_id string,
+    reference_id text,
     transaction_at timestamp,
     transaction_by text,
     PRIMARY KEY(id),
-    FOREIGN KEY(owned_by) REFERENCES accounts(id)
+    FOREIGN KEY(transaction_by) REFERENCES accounts(id)
 );
 -- +goose StatementEnd
 

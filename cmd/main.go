@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-//go:embed migrations/*.sql
+//go:embed migrations
 var migrations embed.FS
 
 func init() {

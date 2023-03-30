@@ -1,9 +1,9 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE wallets (
-    id string NOT NULL,
+    id text NOT NULL,
     owned_by text,
-    status string,
+    status text,
     enable_at timestamp,
     balance int,
     disable_at timestamp,

@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE accounts (
-    id string NOT NULL,
+    id text NOT NULL,
     customer_xid text,
     PRIMARY KEY(id)
 );
@@ -9,6 +9,5 @@ CREATE TABLE accounts (
 
 -- +goose Down
 -- +goose StatementBegin
--- SELECT 'down SQL query';
 drop table accounts;
 -- +goose StatementEnd
