@@ -72,9 +72,10 @@ func main() {
 	accountRepo := repository.NewAccountRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
 	walletRepo := repository.NewWalletRepository(db)
+	transactionRepo := repository.NewTransactionRepository(db)
 
 	accountService := service.NewAccountService(accountRepo, tokenRepo)
-	walletService := service.NewWalletService(walletRepo, tokenRepo)
+	walletService := service.NewWalletService(walletRepo, tokenRepo, transactionRepo)
 
 	accountHandler := accHandler.NewAccountHandler(accountService, time.Duration(timeoutCtx)*time.Second)
 	walletHandler := accHandler.NewWalletHandler(walletService, time.Duration(timeoutCtx)*time.Second)
@@ -86,6 +87,7 @@ func main() {
 	handler.POST("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.EnableWallet))
 	handler.PATCH("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.DisableWallet))
 	handler.GET("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.ViewBalance))
+	handler.GET("/api/v1/wallet/transactions", middleware.AuthMiddleware(walletHandler.ListTransactions))
 
 	logrus.Infof("Server run on localhost%v", serverPort)
 	log.Fatal(http.ListenAndServe(serverPort, handler))

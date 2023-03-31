@@ -25,4 +25,5 @@ type WalletService interface {
 	Enable(ctx context.Context, token string) (Wallets, error)
 	Disable(ctx context.Context, token string, isDisabled bool) (Wallets, error)
 	Balance(ctx context.Context, token string) (Wallets, error)
+	Transactions(ctx context.Context, token string) ([]Transaction, error)
 }

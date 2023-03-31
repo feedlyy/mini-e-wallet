@@ -162,3 +162,43 @@ func (o *WalletHandler) ViewBalance(w http.ResponseWriter, r *http.Request, _ ht
 	json.NewEncoder(w).Encode(resp)
 	return
 }
+
+func (o *WalletHandler) ListTransactions(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var (
+		err   error
+		token = r.Context().Value("token").(string)
+		resp  = helpers.Response{
+			Status: helpers.SuccessMsg,
+			Data:   nil,
+		}
+		res     []domain.Transaction
+		errResp = helpers.ErrResp{}
+	)
+	w.Header().Set("Content-Type", "application/json")
+
+	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
+	defer cancel()
+
+	res, err = o.walletService.Transactions(ctx, token)
+	if err != nil {
+		errResp.Err = err.Error()
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		switch {
+		case err.Error() == helpers.ErrWalletDisabled:
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(resp)
+			return
+		default:
+			// Serialize the error response to JSON and send it back to the client
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+	}
+
+	resp.Data = map[string]interface{}{"transactions": res}
+	json.NewEncoder(w).Encode(resp)
+	return
+}
