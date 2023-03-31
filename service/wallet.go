@@ -125,7 +125,7 @@ func (w *walletService) Balance(ctx context.Context, token string) (domain.Walle
 	}
 
 	if walletAcc == (domain.Wallets{}) || walletAcc.Status == helpers.DisabledStatus {
-		err = errors.New(helpers.ErrWalletNotExists)
+		err = errors.New(helpers.ErrWalletDisabled)
 		logrus.Errorf("Wallet - Service|Err data alr enabled %v", err)
 		return walletAcc, err
 	}
