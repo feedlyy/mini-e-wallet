@@ -146,7 +146,7 @@ func (o *WalletHandler) ViewBalance(w http.ResponseWriter, r *http.Request, _ ht
 		resp.Data = errResp
 
 		switch {
-		case err.Error() == helpers.ErrWalletNotExists:
+		case err.Error() == helpers.ErrWalletDisabled:
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(resp)
 			return
