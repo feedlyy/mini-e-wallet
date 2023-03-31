@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	sql2 "database/sql"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
@@ -69,7 +70,7 @@ func (a *tokenRepository) GetByToken(ctx context.Context, token string) (domain.
 
 	row = stmt.QueryRowxContext(ctx, token, time.Now())
 	err = row.Scan(&res.AccountID)
-	if err != nil {
+	if err != nil && err != sql2.ErrNoRows {
 		logrus.Errorf("Tokens - Repository|err when get by token, err:%v", err)
 		return domain.Tokens{}, err
 	}
