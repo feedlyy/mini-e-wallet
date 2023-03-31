@@ -85,6 +85,7 @@ func main() {
 	handler.POST("/api/v1/init", accountHandler.RegistUser)
 	handler.POST("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.EnableWallet))
 	handler.PATCH("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.DisableWallet))
+	handler.GET("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.ViewBalance))
 
 	logrus.Infof("Server run on localhost%v", serverPort)
 	log.Fatal(http.ListenAndServe(serverPort, handler))

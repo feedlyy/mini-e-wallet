@@ -54,7 +54,7 @@ func (w *walletService) Enable(ctx context.Context, token string) (domain.Wallet
 		}
 
 		if walletAcc.Status == helpers.EnabledStatus {
-			err = errors.New("Already enabled")
+			err = errors.New(helpers.ErrAlreadyEnabled)
 			logrus.Errorf("Wallet - Service|Err data alr enabled %v", err)
 			return walletAcc, err
 		}
@@ -99,6 +99,33 @@ func (w *walletService) Disable(ctx context.Context, token string) (domain.Walle
 	err = w.walletRepo.Update(ctx, walletAcc)
 	if err != nil {
 		return domain.Wallets{}, err
+	}
+
+	return walletAcc, nil
+}
+
+func (w *walletService) Balance(ctx context.Context, token string) (domain.Wallets, error) {
+	var (
+		err       error
+		tokenData domain.Tokens
+		walletAcc domain.Wallets
+	)
+	// get id by tokens
+	tokenData, err = w.tokenRepo.GetByToken(ctx, token)
+	if err != nil {
+		return domain.Wallets{}, err
+	}
+
+	// get data wallet
+	walletAcc, err = w.walletRepo.GetByOwnedID(ctx, tokenData.AccountID)
+	if err != nil && err != sql.ErrNoRows {
+		return domain.Wallets{}, err
+	}
+
+	if walletAcc == (domain.Wallets{}) || walletAcc.Status == helpers.DisabledStatus {
+		err = errors.New(helpers.ErrWalletNotExists)
+		logrus.Errorf("Wallet - Service|Err data alr enabled %v", err)
+		return walletAcc, err
 	}
 
 	return walletAcc, nil
