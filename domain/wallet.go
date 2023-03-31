@@ -23,4 +23,5 @@ type WalletRepository interface {
 
 type WalletService interface {
 	Enable(ctx context.Context, token string) (Wallets, error)
+	Disable(ctx context.Context, token string) (Wallets, error)
 }

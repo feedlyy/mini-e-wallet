@@ -74,3 +74,32 @@ func (w *walletService) Enable(ctx context.Context, token string) (domain.Wallet
 
 	return walletAcc, nil
 }
+
+func (w *walletService) Disable(ctx context.Context, token string) (domain.Wallets, error) {
+	var (
+		err       error
+		tokenData domain.Tokens
+		walletAcc domain.Wallets
+	)
+	// get id by tokens
+	tokenData, err = w.tokenRepo.GetByToken(ctx, token)
+	if err != nil {
+		return domain.Wallets{}, err
+	}
+
+	// get data wallet
+	walletAcc, err = w.walletRepo.GetByOwnedID(ctx, tokenData.AccountID)
+	if err != nil && err != sql.ErrNoRows {
+		return domain.Wallets{}, err
+	}
+
+	// update status to disabled
+	walletAcc.Status = helpers.DisabledStatus
+	walletAcc.DisabledAt = sql.NullTime{Time: time.Now(), Valid: true}
+	err = w.walletRepo.Update(ctx, walletAcc)
+	if err != nil {
+		return domain.Wallets{}, err
+	}
+
+	return walletAcc, nil
+}
