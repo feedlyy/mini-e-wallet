@@ -7,6 +7,7 @@ import (
 	"mini-e-wallet/domain"
 	"mini-e-wallet/helpers"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -70,17 +71,44 @@ func (o *WalletHandler) DisableWallet(w http.ResponseWriter, r *http.Request, _ 
 			Status: helpers.SuccessMsg,
 			Data:   nil,
 		}
-		res domain.Wallets
+		res            domain.Wallets
+		formIsDisabled = r.PostFormValue("is_disabled")
+		isDisabled     bool
+		errResp        = helpers.ErrResp{}
 	)
 	w.Header().Set("Content-Type", "application/json")
 
 	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
 	defer cancel()
 
-	res, err = o.walletService.Disable(ctx, token)
-	if err != nil {
+	if formIsDisabled == "" {
+		errResp.Err = "Missing required field: is_disabled"
 		resp.Status = helpers.FailMsg
-		resp.Data = err.Error()
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	isDisabled, err = strconv.ParseBool(formIsDisabled)
+	if err != nil {
+		errResp.Err = err.Error()
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	res, err = o.walletService.Disable(ctx, token, isDisabled)
+	if err != nil {
+		errResp.Err = err.Error()
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
 
 		// Serialize the error response to JSON and send it back to the client
 		w.WriteHeader(http.StatusInternalServerError)

@@ -75,7 +75,7 @@ func (w *walletService) Enable(ctx context.Context, token string) (domain.Wallet
 	return walletAcc, nil
 }
 
-func (w *walletService) Disable(ctx context.Context, token string) (domain.Wallets, error) {
+func (w *walletService) Disable(ctx context.Context, token string, isDisabled bool) (domain.Wallets, error) {
 	var (
 		err       error
 		tokenData domain.Tokens
@@ -94,7 +94,9 @@ func (w *walletService) Disable(ctx context.Context, token string) (domain.Walle
 	}
 
 	// update status to disabled
-	walletAcc.Status = helpers.DisabledStatus
+	if isDisabled {
+		walletAcc.Status = helpers.DisabledStatus
+	}
 	walletAcc.DisabledAt = sql.NullTime{Time: time.Now(), Valid: true}
 	err = w.walletRepo.Update(ctx, walletAcc)
 	if err != nil {
