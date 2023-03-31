@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 	"mini-e-wallet/domain"
+	"time"
 )
 
 type tokenRepository struct {
@@ -36,4 +37,32 @@ func (a *tokenRepository) Store(ctx context.Context, token domain.Tokens, tx *sq
 	}
 
 	return nil
+}
+
+func (a *tokenRepository) GetByToken(ctx context.Context, token string) (domain.Tokens, error) {
+	var (
+		err  error
+		res  domain.Tokens
+		sql  string
+		stmt *sqlx.Stmt
+	)
+	sql, _, err = sq.Select("*").From("tokens").Where(sq.And{
+		sq.Eq{"token": token},
+		sq.GtOrEq{"expiration": time.Now()},
+	}).PlaceholderFormat(sq.Dollar).ToSql()
+
+	stmt, err = a.db.PreparexContext(ctx, sql)
+	if err != nil {
+		logrus.Errorf("Tokens - Repository|err when get by token, err:%v", err)
+		return domain.Tokens{}, err
+	}
+	defer stmt.Close()
+
+	err = stmt.GetContext(ctx, res, token)
+	if err != nil {
+		logrus.Errorf("Tokens - Repository|err when get by token, err:%v", err)
+		return domain.Tokens{}, err
+	}
+
+	return res, nil
 }

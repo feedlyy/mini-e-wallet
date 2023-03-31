@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	accHandler "mini-e-wallet/handler"
+	md "mini-e-wallet/middleware"
 	"mini-e-wallet/repository"
 	"mini-e-wallet/service"
 	"net/http"
@@ -72,6 +73,7 @@ func main() {
 	tokenRepo := repository.NewTokenRepository(db)
 	accountService := service.NewAccountService(accountRepo, tokenRepo)
 	accountHandler := accHandler.NewAccountHandler(accountService, time.Duration(timeoutCtx)*time.Second)
+	middleware := md.NewMiddleware(tokenRepo)
 
 	serverPort := viper.GetString(`server.address`)
 	handler := httprouter.New()

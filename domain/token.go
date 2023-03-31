@@ -16,4 +16,5 @@ type Tokens struct {
 
 type TokenRepository interface {
 	Store(ctx context.Context, token Tokens, tx *sqlx.Tx) error
+	GetByToken(ctx context.Context, token string) (Tokens, error)
 }
