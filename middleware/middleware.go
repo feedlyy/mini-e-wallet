@@ -49,7 +49,10 @@ func (m *Middleware) AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 			return
 		}
 
-		// If authentication succeeded, call the next handler
-		next(w, r, ps)
+		// Add the token to the request context
+		ctx = context.WithValue(ctx, "token", token)
+
+		// If authentication succeeded, call the next handler with the modified context
+		next(w, r.WithContext(ctx), ps)
 	}
 }
