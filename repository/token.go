@@ -58,7 +58,7 @@ func (a *tokenRepository) GetByToken(ctx context.Context, token string) (domain.
 	}
 	defer stmt.Close()
 
-	err = stmt.GetContext(ctx, res, token)
+	err = stmt.GetContext(ctx, res, token, time.Now())
 	if err != nil {
 		logrus.Errorf("Tokens - Repository|err when get by token, err:%v", err)
 		return domain.Tokens{}, err
