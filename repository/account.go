@@ -29,6 +29,10 @@ func (a *accountRepository) Store(ctx context.Context, customerXID string, tx *s
 	)
 	sql, _, err = sq.Insert("accounts").Columns("id", "customer_xid").
 		Values("id", "customer").PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		logrus.Errorf("Accounts - Repository|err when generate sql, err:%v", err)
+		return "", err
+	}
 
 	if tx == nil {
 		_, err = a.db.ExecContext(ctx, sql, id, customerXID)

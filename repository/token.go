@@ -25,6 +25,10 @@ func (a *tokenRepository) Store(ctx context.Context, token domain.Tokens, tx *sq
 	sql, _, err = sq.Insert("tokens").Columns("account_id", "token", "expiration", "created_at").
 		Values("account_id", "token", "expiration", "created_at").
 		PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		logrus.Errorf("Tokens - Repository|err when generate sql, err:%v", err)
+		return err
+	}
 
 	if tx == nil {
 		_, err = a.db.ExecContext(ctx, sql, token.AccountID, token.Token, token.Expiration, token.CreatedAt)
@@ -42,23 +46,29 @@ func (a *tokenRepository) Store(ctx context.Context, token domain.Tokens, tx *sq
 func (a *tokenRepository) GetByToken(ctx context.Context, token string) (domain.Tokens, error) {
 	var (
 		err  error
-		res  domain.Tokens
+		res  = domain.Tokens{}
 		sql  string
 		stmt *sqlx.Stmt
+		row  *sqlx.Row
 	)
-	sql, _, err = sq.Select("*").From("tokens").Where(sq.And{
+	sql, _, err = sq.Select("account_id").From("tokens").Where(sq.And{
 		sq.Eq{"token": token},
 		sq.GtOrEq{"expiration": time.Now()},
 	}).PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		logrus.Errorf("Tokens - Repository|err when generate sql, err:%v", err)
+		return domain.Tokens{}, err
+	}
 
 	stmt, err = a.db.PreparexContext(ctx, sql)
 	if err != nil {
-		logrus.Errorf("Tokens - Repository|err when get by token, err:%v", err)
+		logrus.Errorf("Tokens - Repository|err when init prepare statement, err:%v", err)
 		return domain.Tokens{}, err
 	}
 	defer stmt.Close()
 
-	err = stmt.GetContext(ctx, res, token, time.Now())
+	row = stmt.QueryRowxContext(ctx, token, time.Now())
+	err = row.Scan(&res.AccountID)
 	if err != nil {
 		logrus.Errorf("Tokens - Repository|err when get by token, err:%v", err)
 		return domain.Tokens{}, err

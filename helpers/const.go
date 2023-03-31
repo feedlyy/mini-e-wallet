@@ -1,6 +1,8 @@
 package helpers
 
 const (
-	SuccessMsg = "success"
-	FailMsg    = "fail"
+	SuccessMsg     = "success"
+	FailMsg        = "fail"
+	EnabledStatus  = "enabled"
+	DisabledStatus = "disabled"
 )

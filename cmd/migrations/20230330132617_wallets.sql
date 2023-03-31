@@ -4,9 +4,9 @@ CREATE TABLE wallets (
     id text NOT NULL,
     owned_by text,
     status text,
-    enable_at timestamp,
+    enabled_at timestamp,
     balance int,
-    disable_at timestamp,
+    disabled_at timestamp,
     PRIMARY KEY(id),
     FOREIGN KEY(owned_by) REFERENCES accounts(id)
 );

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"github.com/julienschmidt/httprouter"
+	"github.com/sirupsen/logrus"
 	"mini-e-wallet/domain"
 	"net/http"
 	"strings"
@@ -26,6 +27,7 @@ func (m *Middleware) AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 		ctx := context.Background()
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
+			logrus.Error("Middleware | Empty auth header")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -33,6 +35,7 @@ func (m *Middleware) AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 		// Extract the token from the header
 		splitHeader := strings.Split(authHeader, " ")
 		if len(splitHeader) != 2 || strings.ToLower(splitHeader[0]) != "token" {
+			logrus.Error("Middleware | Empty token")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -45,6 +48,7 @@ func (m *Middleware) AuthMiddleware(next httprouter.Handle) httprouter.Handle {
 		}
 
 		if checkToken == (domain.Tokens{}) {
+			logrus.Error("Middleware | Empty data")
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
