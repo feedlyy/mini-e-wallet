@@ -33,7 +33,8 @@ func (o *WalletHandler) EnableWallet(w http.ResponseWriter, r *http.Request, _ h
 			Status: helpers.SuccessMsg,
 			Data:   nil,
 		}
-		res domain.Wallets
+		res     domain.Wallets
+		errResp = helpers.ErrResp{}
 	)
 	w.Header().Set("Content-Type", "application/json")
 
@@ -42,8 +43,9 @@ func (o *WalletHandler) EnableWallet(w http.ResponseWriter, r *http.Request, _ h
 
 	res, err = o.walletService.Enable(ctx, token)
 	if err != nil {
+		errResp.Err = err.Error()
 		resp.Status = helpers.FailMsg
-		resp.Data = err.Error()
+		resp.Data = errResp
 
 		switch {
 		case err.Error() == helpers.ErrAlreadyEnabled:
@@ -129,7 +131,8 @@ func (o *WalletHandler) ViewBalance(w http.ResponseWriter, r *http.Request, _ ht
 			Status: helpers.SuccessMsg,
 			Data:   nil,
 		}
-		res domain.Wallets
+		res     domain.Wallets
+		errResp = helpers.ErrResp{}
 	)
 	w.Header().Set("Content-Type", "application/json")
 
@@ -138,8 +141,9 @@ func (o *WalletHandler) ViewBalance(w http.ResponseWriter, r *http.Request, _ ht
 
 	res, err = o.walletService.Balance(ctx, token)
 	if err != nil {
+		errResp.Err = err.Error()
 		resp.Status = helpers.FailMsg
-		resp.Data = err.Error()
+		resp.Data = errResp
 
 		switch {
 		case err.Error() == helpers.ErrWalletNotExists:
