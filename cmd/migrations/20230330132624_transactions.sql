@@ -5,7 +5,7 @@ CREATE TABLE transactions (
     status text,
     type text,
     amount int,
-    reference_id text,
+    reference_id text UNIQUE,
     transaction_at timestamp,
     transaction_by text,
     PRIMARY KEY(id),
