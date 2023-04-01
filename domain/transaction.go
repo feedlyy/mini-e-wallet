@@ -12,7 +12,7 @@ type Transaction struct {
 	Type          string    `json:"type"`
 	Amount        int       `json:"amount"`
 	ReferenceID   string    `json:"reference_id"`
-	TransactionBy string    `json:"transaction_by"`
+	TransactionBy string    `json:"-"`
 }
 
 type Deposit struct {
