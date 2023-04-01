@@ -87,4 +87,10 @@ the tables will auto migrate, the tables:
 - wallets
 ```
 
+To use the api, don't forget to add this Header for api that required user
+logged-in:
+```azure
+Authorization:  Token (your token)
+```
+
 
