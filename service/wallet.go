@@ -157,7 +157,6 @@ func (w *walletService) AddFunds(ctx context.Context, token string, transaction 
 		tokenData domain.Tokens
 		id        = helpers.GenerateRandomUUID()
 	)
-
 	// get id by tokens
 	tokenData, err = w.tokenRepo.GetByToken(ctx, token)
 	if err != nil {
@@ -174,6 +173,56 @@ func (w *walletService) AddFunds(ctx context.Context, token string, transaction 
 	err = w.transactionRepo.Store(ctx, transaction)
 	if err != nil {
 		return domain.Transaction{}, err
+	}
+
+	// update wallet
+	err = w.kafka.SendMessage(helpers.WalletTopic, transaction)
+	if err != nil {
+		logrus.Errorf("Wallet - Service|err send email user with kafka, err:%v", err)
+		return domain.Transaction{}, err
+	}
+
+	return transaction, nil
+}
+
+func (w *walletService) Withdraw(ctx context.Context, token string, transaction domain.Transaction) (domain.Transaction, error) {
+	var (
+		err       error
+		tokenData domain.Tokens
+		id        = helpers.GenerateRandomUUID()
+		walletAcc domain.Wallets
+	)
+	// get id by tokens
+	tokenData, err = w.tokenRepo.GetByToken(ctx, token)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
+	// get data wallet
+	walletAcc, err = w.walletRepo.GetByOwnedID(ctx, tokenData.AccountID)
+	if err != nil && err != sql.ErrNoRows {
+		return domain.Transaction{}, err
+	}
+
+	transaction.Id = id
+	transaction.TransactionAt = time.Now()
+	transaction.Status = helpers.SuccessMsg
+	transaction.TransactionBy = tokenData.AccountID
+	transaction.Type = helpers.Withdrawal
+
+	if walletAcc.Balance-transaction.Amount < 0 {
+		transaction.Status = helpers.FailMsgV2
+	}
+
+	// store transaction
+	err = w.transactionRepo.Store(ctx, transaction)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
+	if transaction.Status == helpers.FailMsgV2 {
+		logrus.Errorf("Wallet - Service|%v", helpers.InsufficientBalance)
+		return domain.Transaction{}, errors.New(helpers.InsufficientBalance)
 	}
 
 	// update wallet

@@ -12,7 +12,7 @@ type Transaction struct {
 	Type          string    `json:"type"`
 	Amount        int       `json:"amount"`
 	ReferenceID   string    `json:"reference_id"`
-	TransactionBy string    `json:"-"`
+	TransactionBy string    `json:"transaction_by,omitempty"`
 }
 
 type Deposit struct {
@@ -20,6 +20,15 @@ type Deposit struct {
 	DepositedBy string    `json:"deposited_by,omitempty"`
 	Status      string    `json:"status,omitempty"`
 	DepositedAt time.Time `json:"deposited_at"`
+	Amount      int       `json:"amount,omitempty"`
+	ReferenceId string    `json:"reference_id,omitempty"`
+}
+
+type Withdrawal struct {
+	Id          string    `json:"id,omitempty"`
+	WithdrawnBy string    `json:"withdrawn_by,omitempty"`
+	Status      string    `json:"status,omitempty"`
+	WithdrawnAt time.Time `json:"withdrawn_at"`
 	Amount      int       `json:"amount,omitempty"`
 	ReferenceId string    `json:"reference_id,omitempty"`
 }

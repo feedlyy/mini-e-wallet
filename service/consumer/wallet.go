@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"mini-e-wallet/domain"
 	"mini-e-wallet/domain/consumer"
+	"mini-e-wallet/helpers"
 	"os"
 	"time"
 )
@@ -64,7 +65,11 @@ ConsumerLoop:
 				break ConsumerLoop
 			}
 
-			walletAcc.Balance += tr.Amount
+			if tr.Type == helpers.Withdrawal {
+				walletAcc.Balance -= tr.Amount
+			} else {
+				walletAcc.Balance += tr.Amount
+			}
 			err = w.walletRepo.Update(ctx, walletAcc)
 			if err != nil {
 				break ConsumerLoop

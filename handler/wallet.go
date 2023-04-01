@@ -145,17 +145,10 @@ func (o *WalletHandler) ViewBalance(w http.ResponseWriter, r *http.Request, _ ht
 		resp.Status = helpers.FailMsg
 		resp.Data = errResp
 
-		switch {
-		case err.Error() == helpers.ErrWalletDisabled:
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(resp)
-			return
-		default:
-			// Serialize the error response to JSON and send it back to the client
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(resp)
-			return
-		}
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(resp)
+		return
 	}
 
 	resp.Data = res
@@ -185,17 +178,10 @@ func (o *WalletHandler) ListTransactions(w http.ResponseWriter, r *http.Request,
 		resp.Status = helpers.FailMsg
 		resp.Data = errResp
 
-		switch {
-		case err.Error() == helpers.ErrWalletDisabled:
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(resp)
-			return
-		default:
-			// Serialize the error response to JSON and send it back to the client
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(resp)
-			return
-		}
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(resp)
+		return
 	}
 
 	resp.Data = map[string]interface{}{"transactions": res}
@@ -279,7 +265,95 @@ func (o *WalletHandler) AddDeposit(w http.ResponseWriter, r *http.Request, _ htt
 		Amount:      res.Amount,
 		ReferenceId: res.ReferenceID,
 	}
-	resp.Data = map[string]interface{}{"deposit": deposito}
+	resp.Data = map[string]interface{}{helpers.Deposit: deposito}
+	json.NewEncoder(w).Encode(resp)
+	return
+}
+
+func (o *WalletHandler) WithdrawFund(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var (
+		err   error
+		token = r.Context().Value("token").(string)
+		resp  = helpers.Response{
+			Status: helpers.SuccessMsg,
+			Data:   nil,
+		}
+		req, res   domain.Transaction
+		formAmount = r.PostFormValue("amount")
+		formRefId  = r.PostFormValue("reference_id")
+		errResp    = helpers.ErrResp{}
+		withdrawal domain.Withdrawal
+		amount     int
+	)
+	w.Header().Set("Content-Type", "application/json")
+
+	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
+	defer cancel()
+
+	if formAmount == "" {
+		errResp.Err = "Missing required field: amount"
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	if formRefId == "" {
+		errResp.Err = "Missing required field: reference_id"
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	amount, err = strconv.Atoi(formAmount)
+	if err != nil {
+		errResp.Err = err.Error()
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	req.Amount = amount
+	req.ReferenceID = formRefId
+	res, err = o.walletService.Withdraw(ctx, token, req)
+	if err != nil {
+		errResp.Err = err.Error()
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		switch {
+		case err.Error() == helpers.InsufficientBalance:
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(resp)
+			return
+		default:
+			// Serialize the error response to JSON and send it back to the client
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+	}
+
+	withdrawal = domain.Withdrawal{
+		Id:          res.Id,
+		WithdrawnBy: res.TransactionBy,
+		Status:      res.Status,
+		WithdrawnAt: res.TransactionAt,
+		Amount:      res.Amount,
+		ReferenceId: res.ReferenceID,
+	}
+	resp.Data = map[string]interface{}{helpers.Withdrawal: withdrawal}
 	json.NewEncoder(w).Encode(resp)
 	return
 }

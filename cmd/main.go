@@ -113,6 +113,7 @@ func main() {
 	handler.POST("/api/v1/init", accountHandler.RegistUser)
 	handler.POST("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.EnableWallet))
 	handler.POST("/api/v1/wallet/deposits", middleware.WalletMiddleware(walletHandler.AddDeposit))
+	handler.POST("/api/v1/wallet/withdrawals", middleware.WalletMiddleware(walletHandler.WithdrawFund))
 	handler.PATCH("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.DisableWallet))
 	handler.GET("/api/v1/wallet", middleware.WalletMiddleware(walletHandler.ViewBalance))
 	handler.GET("/api/v1/wallet/transactions", middleware.WalletMiddleware(walletHandler.ListTransactions))

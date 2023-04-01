@@ -27,4 +27,5 @@ type WalletService interface {
 	Balance(ctx context.Context, token string) (Wallets, error)
 	Transactions(ctx context.Context, token string) ([]Transaction, error)
 	AddFunds(ctx context.Context, token string, transaction Transaction) (Transaction, error)
+	Withdraw(ctx context.Context, token string, transaction Transaction) (Transaction, error)
 }
