@@ -126,12 +126,6 @@ func (w *walletService) Balance(ctx context.Context, token string) (domain.Walle
 		return domain.Wallets{}, err
 	}
 
-	if walletAcc == (domain.Wallets{}) || walletAcc.Status == helpers.DisabledStatus {
-		err = errors.New(helpers.ErrWalletDisabled)
-		logrus.Errorf("Wallet - Service|Err data alr disabled %v", err)
-		return walletAcc, err
-	}
-
 	return walletAcc, nil
 }
 
@@ -139,24 +133,11 @@ func (w *walletService) Transactions(ctx context.Context, token string) ([]domai
 	var (
 		err       error
 		tokenData domain.Tokens
-		walletAcc domain.Wallets
 		res       []domain.Transaction
 	)
 	// get id by tokens
 	tokenData, err = w.tokenRepo.GetByToken(ctx, token)
 	if err != nil {
-		return []domain.Transaction{}, err
-	}
-
-	// get data wallet
-	walletAcc, err = w.walletRepo.GetByOwnedID(ctx, tokenData.AccountID)
-	if err != nil && err != sql.ErrNoRows {
-		return []domain.Transaction{}, err
-	}
-
-	if walletAcc == (domain.Wallets{}) || walletAcc.Status == helpers.DisabledStatus {
-		err = errors.New(helpers.ErrWalletDisabled)
-		logrus.Errorf("Wallet - Service|Err data alr disabled %v", err)
 		return []domain.Transaction{}, err
 	}
 

@@ -79,15 +79,15 @@ func main() {
 
 	accountHandler := accHandler.NewAccountHandler(accountService, time.Duration(timeoutCtx)*time.Second)
 	walletHandler := accHandler.NewWalletHandler(walletService, time.Duration(timeoutCtx)*time.Second)
-	middleware := md.NewMiddleware(tokenRepo)
+	middleware := md.NewMiddleware(tokenRepo, walletRepo)
 
 	serverPort := viper.GetString(`server.address`)
 	handler := httprouter.New()
 	handler.POST("/api/v1/init", accountHandler.RegistUser)
 	handler.POST("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.EnableWallet))
 	handler.PATCH("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.DisableWallet))
-	handler.GET("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.ViewBalance))
-	handler.GET("/api/v1/wallet/transactions", middleware.AuthMiddleware(walletHandler.ListTransactions))
+	handler.GET("/api/v1/wallet", middleware.WalletMiddleware(walletHandler.ViewBalance))
+	handler.GET("/api/v1/wallet/transactions", middleware.WalletMiddleware(walletHandler.ListTransactions))
 
 	logrus.Infof("Server run on localhost%v", serverPort)
 	log.Fatal(http.ListenAndServe(serverPort, handler))
