@@ -17,6 +17,7 @@ type AccResp struct {
 type AccountRepository interface {
 	Store(ctx context.Context, customerXID string, tx *sqlx.Tx) (string, error)
 	BeginTx(ctx context.Context) (*sqlx.Tx, error)
+	GetByCustID(ctx context.Context, customerXID string) (Accounts, error)
 }
 
 type AccountService interface {

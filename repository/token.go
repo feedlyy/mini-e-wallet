@@ -77,3 +77,31 @@ func (a *tokenRepository) GetByToken(ctx context.Context, token string) (domain.
 
 	return res, nil
 }
+
+func (a *tokenRepository) Update(ctx context.Context, tokens domain.Tokens, tx *sqlx.Tx) error {
+	var (
+		err error
+		sql string
+	)
+	sql, _, err = sq.Update("tokens").
+		Set("expiration", tokens.Expiration).
+		Where(sq.Eq{"account_id": "id"}).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		logrus.Errorf("Tokens - Repository|err when generate sql, err:%v", err)
+		return err
+	}
+
+	if tx == nil {
+		_, err = a.db.ExecContext(ctx, sql, tokens.Expiration, tokens.AccountID)
+	} else {
+		_, err = tx.ExecContext(ctx, sql, tokens.Expiration, tokens.AccountID)
+	}
+	if err != nil {
+		logrus.Errorf("Tokens - Repository|err when update data, err:%v", err)
+		return err
+	}
+
+	return nil
+}
