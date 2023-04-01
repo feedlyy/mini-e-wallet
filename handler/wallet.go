@@ -202,3 +202,84 @@ func (o *WalletHandler) ListTransactions(w http.ResponseWriter, r *http.Request,
 	json.NewEncoder(w).Encode(resp)
 	return
 }
+
+func (o *WalletHandler) AddDeposit(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var (
+		err   error
+		token = r.Context().Value("token").(string)
+		resp  = helpers.Response{
+			Status: helpers.SuccessMsg,
+			Data:   nil,
+		}
+		req, res   domain.Transaction
+		formAmount = r.PostFormValue("amount")
+		formRefId  = r.PostFormValue("reference_id")
+		errResp    = helpers.ErrResp{}
+		deposito   domain.Deposit
+		amount     int
+	)
+	w.Header().Set("Content-Type", "application/json")
+
+	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
+	defer cancel()
+
+	if formAmount == "" {
+		errResp.Err = "Missing required field: amount"
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	if formRefId == "" {
+		errResp.Err = "Missing required field: reference_id"
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	amount, err = strconv.Atoi(formAmount)
+	if err != nil {
+		errResp.Err = err.Error()
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	req.Amount = amount
+	req.ReferenceID = formRefId
+	res, err = o.walletService.AddFunds(ctx, token, req)
+	if err != nil {
+		errResp.Err = err.Error()
+		resp.Status = helpers.FailMsg
+		resp.Data = errResp
+
+		// Serialize the error response to JSON and send it back to the client
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	deposito = domain.Deposit{
+		Id:          res.Id,
+		DepositedBy: res.TransactionBy,
+		Status:      res.Status,
+		DepositedAt: res.TransactionAt,
+		Amount:      res.Amount,
+		ReferenceId: res.ReferenceID,
+	}
+	resp.Data = map[string]interface{}{"deposit": deposito}
+	json.NewEncoder(w).Encode(resp)
+	return
+}

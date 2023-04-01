@@ -14,13 +14,15 @@ type walletService struct {
 	walletRepo      domain.WalletRepository
 	tokenRepo       domain.TokenRepository
 	transactionRepo domain.TransactionRepository
+	kafka           domain.KafkaProducer
 }
 
-func NewWalletService(w domain.WalletRepository, t domain.TokenRepository, tr domain.TransactionRepository) domain.WalletService {
+func NewWalletService(w domain.WalletRepository, t domain.TokenRepository, tr domain.TransactionRepository, k domain.KafkaProducer) domain.WalletService {
 	return &walletService{
 		walletRepo:      w,
 		tokenRepo:       t,
 		transactionRepo: tr,
+		kafka:           k,
 	}
 }
 
@@ -147,4 +149,39 @@ func (w *walletService) Transactions(ctx context.Context, token string) ([]domai
 	}
 
 	return res, nil
+}
+
+func (w *walletService) AddFunds(ctx context.Context, token string, transaction domain.Transaction) (domain.Transaction, error) {
+	var (
+		err       error
+		tokenData domain.Tokens
+		id        = helpers.GenerateRandomUUID()
+	)
+
+	// get id by tokens
+	tokenData, err = w.tokenRepo.GetByToken(ctx, token)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
+	transaction.Id = id
+	transaction.TransactionAt = time.Now()
+	transaction.Status = helpers.SuccessMsg
+	transaction.TransactionBy = tokenData.AccountID
+	transaction.Type = helpers.Deposit
+
+	// store transaction
+	err = w.transactionRepo.Store(ctx, transaction)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+
+	// update wallet
+	err = w.kafka.SendMessage(helpers.WalletTopic, transaction)
+	if err != nil {
+		logrus.Errorf("Wallet - Service|err send email user with kafka, err:%v", err)
+		return domain.Transaction{}, err
+	}
+
+	return transaction, nil
 }

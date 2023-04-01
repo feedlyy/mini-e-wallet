@@ -11,5 +11,12 @@
     "port": "5432",
     "user": "user",
     "name": "julo"
+  },
+  "kafka": {
+    "address": "kafka:9092",
+    "retry": 3,
+    "timeout": 10,
+    "username": "",
+    "password": ""
   }
 }

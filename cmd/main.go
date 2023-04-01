@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"fmt"
+	"github.com/Shopify/sarama"
 	"github.com/jmoiron/sqlx"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
@@ -10,6 +11,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"log"
+	"mini-e-wallet/config"
+	"mini-e-wallet/domain"
 	accHandler "mini-e-wallet/handler"
 	md "mini-e-wallet/middleware"
 	"mini-e-wallet/repository"
@@ -68,6 +71,30 @@ func main() {
 		panic(err)
 	}
 
+	kafkaUsr := viper.GetString(`kafka.username`)
+	kafkaPwd := viper.GetString(`kafka.password`)
+	kafkaAddr := viper.GetString(`kafka.address`)
+	kafkaRetry := viper.GetInt(`kafka.retry`)
+	kafkaTimeout := viper.GetInt(`kafka.timeout`)
+	kafkaConfig := config.GetKafkaConfig(kafkaUsr, kafkaPwd, kafkaTimeout, kafkaRetry)
+	producers, err := sarama.NewSyncProducer([]string{kafkaAddr}, kafkaConfig)
+	if err != nil {
+		logrus.Errorf("Unable to create kafka producer got error %v", err)
+		return
+	}
+	defer func() {
+		if err = producers.Close(); err != nil {
+			logrus.Errorf("Unable to stop kafka producer: %v", err)
+			return
+		}
+	}()
+
+	logrus.Infof("Success create kafka sync-producer")
+
+	kafka := &domain.KafkaProducer{
+		Producer: producers,
+	}
+
 	timeoutCtx := viper.GetInt(`context.timeout`)
 	accountRepo := repository.NewAccountRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
@@ -75,7 +102,7 @@ func main() {
 	transactionRepo := repository.NewTransactionRepository(db)
 
 	accountService := service.NewAccountService(accountRepo, tokenRepo)
-	walletService := service.NewWalletService(walletRepo, tokenRepo, transactionRepo)
+	walletService := service.NewWalletService(walletRepo, tokenRepo, transactionRepo, *kafka)
 
 	accountHandler := accHandler.NewAccountHandler(accountService, time.Duration(timeoutCtx)*time.Second)
 	walletHandler := accHandler.NewWalletHandler(walletService, time.Duration(timeoutCtx)*time.Second)
@@ -85,6 +112,7 @@ func main() {
 	handler := httprouter.New()
 	handler.POST("/api/v1/init", accountHandler.RegistUser)
 	handler.POST("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.EnableWallet))
+	handler.POST("/api/v1/wallet/deposits", middleware.WalletMiddleware(walletHandler.AddDeposit))
 	handler.PATCH("/api/v1/wallet", middleware.AuthMiddleware(walletHandler.DisableWallet))
 	handler.GET("/api/v1/wallet", middleware.WalletMiddleware(walletHandler.ViewBalance))
 	handler.GET("/api/v1/wallet/transactions", middleware.WalletMiddleware(walletHandler.ListTransactions))

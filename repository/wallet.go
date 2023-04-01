@@ -81,6 +81,7 @@ func (a *walletRepository) Update(ctx context.Context, wallet domain.Wallets) er
 	sql, _, err = sq.Update("wallets").
 		Set("disabled_at", wallet.DisabledAt).
 		Set("status", wallet.Status).
+		Set("balance", wallet.Balance).
 		Where(sq.Eq{"id": "id"}).
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
@@ -89,7 +90,7 @@ func (a *walletRepository) Update(ctx context.Context, wallet domain.Wallets) er
 		return err
 	}
 
-	_, err = a.db.ExecContext(ctx, sql, wallet.DisabledAt, wallet.Status, wallet.Id)
+	_, err = a.db.ExecContext(ctx, sql, wallet.DisabledAt, wallet.Status, wallet.Balance, wallet.Id)
 	if err != nil {
 		logrus.Errorf("Wallets - Repository|err when update data, err:%v", err)
 		return err

@@ -57,3 +57,26 @@ func (t *transactionRepository) GetsByUsrID(ctx context.Context, usrID string) (
 
 	return res, nil
 }
+
+func (t *transactionRepository) Store(ctx context.Context, transaction domain.Transaction) error {
+	var (
+		err error
+		sql string
+	)
+	sql, _, err = sq.Insert("transactions").Columns("id", "status", "type", "amount", "reference_id", "transaction_at", "transaction_by").
+		Values("id", "status", "type", "amount", "reference_id", "transaction_at", "transaction_by").
+		PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		logrus.Errorf("Transactions - Repository|err when generate sql, err:%v", err)
+		return err
+	}
+
+	_, err = t.db.ExecContext(ctx, sql, transaction.Id, transaction.Status, transaction.Type, transaction.Amount, transaction.ReferenceID,
+		transaction.TransactionAt, transaction.TransactionBy)
+	if err != nil {
+		logrus.Errorf("Transactions - Repository|err when store data, err:%v", err)
+		return err
+	}
+
+	return nil
+}
