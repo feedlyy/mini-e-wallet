@@ -111,7 +111,7 @@ func (m *Middleware) WalletMiddleware(next httprouter.Handle) httprouter.Handle 
 				Status: helpers.FailMsg,
 				Data:   helpers.ErrResp{Err: helpers.ErrWalletDisabled},
 			}
-			logrus.Errorf("Middleware | Err data alr disabled %v", err)
+			logrus.Error("Middleware | Err data alr disabled")
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(resp)
 			return
